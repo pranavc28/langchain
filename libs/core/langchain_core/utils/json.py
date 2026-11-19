@@ -102,6 +102,9 @@ def parse_partial_json(s: str, *, strict: bool = False) -> Any:
                 new_char = (
                     "\\n"  # Replace the newline character with the escape sequence.
                 )
+            elif char == "u" and escaped:
+                pending_unicode = 4
+                escaped = False
             elif char == "\\":
                 escaped = not escaped
             else:
