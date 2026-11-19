@@ -57,6 +57,9 @@ def _custom_parser(multiline_string: str | bytes | bytearray) -> str:
 # MIT License
 
 
+_HEX_DIGITS = frozenset("0123456789abcdefABCDEF")
+
+
 def parse_partial_json(s: str, *, strict: bool = False) -> Any:
     """Parse a JSON string that may be missing closing braces.
 
@@ -78,11 +81,21 @@ def parse_partial_json(s: str, *, strict: bool = False) -> Any:
     stack = []
     is_inside_string = False
     escaped = False
+    pending_unicode = 0
 
     # Process each character in the string one at a time.
     for char in s:
         new_char = char
         if is_inside_string:
+            if pending_unicode:
+                if char in _HEX_DIGITS:
+                    pending_unicode -= 1
+                    escaped = False
+                    new_chars.append(new_char)
+                    continue
+                # Malformed escape: process this character normally (in
+                # particular, do not swallow a closing quote).
+                pending_unicode = 0
             if char == '"' and not escaped:
                 is_inside_string = False
             elif char == "\n" and not escaped:
@@ -115,6 +128,10 @@ def parse_partial_json(s: str, *, strict: bool = False) -> Any:
     if is_inside_string:
         if escaped:  # Remove unterminated escape character
             new_chars.pop()
+        elif pending_unicode:
+            # Strip the incomplete \\uXXXX escape, not the preceding JSON key.
+            for _ in range(2 + (4 - pending_unicode)):
+                new_chars.pop()
         new_chars.append('"')
 
     # Reverse the stack to get the closing characters.
