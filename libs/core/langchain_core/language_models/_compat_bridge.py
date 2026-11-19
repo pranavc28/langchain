@@ -386,7 +386,7 @@ def finalize_tool_call_chunk(
     if finalized_type == "tool_call":
         finalized_tc = ToolCall(
             type="tool_call",
-            id=id_ or uuid.uuid4().hex,
+            id=id_ or f"tool_call:{uuid.uuid4().hex}",
             name=name or "",
             args=parsed,
         )
@@ -394,7 +394,7 @@ def finalize_tool_call_chunk(
         return finalized_tc
     finalized_stc = ServerToolCall(
         type="server_tool_call",
-        id=id_ or uuid.uuid4().hex,
+        id=id_ or f"server_tool_call:{uuid.uuid4().hex}",
         name=name or "",
         args=parsed,
     )
