@@ -119,8 +119,8 @@ def test_finalize_block_missing_tool_ids_are_distinct_across_types() -> None:
     )
     assert tool["type"] == "tool_call"
     assert server["type"] == "server_tool_call"
-    assert tool["id"]
-    assert server["id"]
+    assert tool["id"].startswith("tool_call:")
+    assert server["id"].startswith("server_tool_call:")
     assert tool["id"] != server["id"]
 
 
@@ -198,7 +198,7 @@ def test_chunks_to_events_parallel_idless_tool_calls() -> None:
         stream.dispatch(event)
     calls = stream.output.tool_calls
     assert len(calls) == 2
-    assert calls[0]["id"] and calls[1]["id"]
+    assert all(call["id"].startswith("tool_call:") for call in calls)
     assert calls[0]["id"] != calls[1]["id"]
     assert [call["args"]["q"] for call in calls] == ["first", "second"]
 
